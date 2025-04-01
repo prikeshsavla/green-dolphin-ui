@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { AppSidebar } from "@/components/app-sidebar";
 import {
   Breadcrumb,
@@ -99,14 +99,49 @@ export default function Page() {
   const [data, setData] = useState(null);
   const [isLoading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const fetchFlags = () => {
     fetch("http://localhost:3000/flags")
       .then((res) => res.json())
       .then((data) => {
         setData(data["data"]);
         setLoading(false);
       });
-  }, []);
+  };
+
+  useEffect(fetchFlags, []);
+
+  const toggleEnvironmentFlag = (
+    environment_flag_id: number,
+    checked: boolean
+  ) => {
+    fetch(`http://localhost:3000/environment_flags/${environment_flag_id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ value: checked }),
+    })
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error("Failed to update environment flag");
+        }
+        return res.json();
+      })
+      .then((updatedFlag) => {
+        setData((prevData) => {
+          const updatedFlags = prevData.flags.map((flag) => {
+            const updatedEnvironmentFlags = flag.environment_flags.map((ef) =>
+              ef.id === environment_flag_id ? { ...ef, value: checked } : ef
+            );
+            return { ...flag, environment_flags: updatedEnvironmentFlags };
+          });
+          return { ...prevData, flags: updatedFlags };
+        });
+      })
+      .catch((error) => {
+        console.error("Error updating environment flag:", error);
+      });
+  };
 
   if (isLoading) return <p>Loading...</p>;
   if (!data) return <p>No flag data</p>;
@@ -145,7 +180,6 @@ export default function Page() {
                     </TableHead>
                   );
                 })}
-                <TableHead className="text-right">Status</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -166,13 +200,18 @@ export default function Page() {
                           key={"environment_flag-" + environment_flag?.id}
                           className="w-[150px]"
                         >
-                          <Switch checked={environment_flag?.value} />
+                          <Switch
+                            checked={environment_flag?.value}
+                            onCheckedChange={(checked) =>
+                              toggleEnvironmentFlag(
+                                environment_flag?.id,
+                                checked
+                              )
+                            }
+                          />
                         </TableHead>
                       );
                     })}
-                    <TableCell className="text-right">
-                      <Switch checked={flag.default_value} />
-                    </TableCell>
                   </TableRow>
                 );
               })}
