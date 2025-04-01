@@ -114,6 +114,15 @@ export default function Page() {
     environment_flag_id: number,
     checked: boolean
   ) => {
+    setData((prevData) => {
+      const updatedFlags = prevData.flags.map((flag) => {
+        const updatedEnvironmentFlags = flag.environment_flags.map((ef) =>
+          ef.id === environment_flag_id ? { ...ef, value: checked } : ef
+        );
+        return { ...flag, environment_flags: updatedEnvironmentFlags };
+      });
+      return { ...prevData, flags: updatedFlags };
+    });
     fetch(`http://localhost:3000/environment_flags/${environment_flag_id}`, {
       method: "PUT",
       headers: {
@@ -127,18 +136,16 @@ export default function Page() {
         }
         return res.json();
       })
-      .then((updatedFlag) => {
+      .catch((error) => {
         setData((prevData) => {
           const updatedFlags = prevData.flags.map((flag) => {
             const updatedEnvironmentFlags = flag.environment_flags.map((ef) =>
-              ef.id === environment_flag_id ? { ...ef, value: checked } : ef
+              ef.id === environment_flag_id ? { ...ef, value: !checked } : ef
             );
             return { ...flag, environment_flags: updatedEnvironmentFlags };
           });
           return { ...prevData, flags: updatedFlags };
         });
-      })
-      .catch((error) => {
         console.error("Error updating environment flag:", error);
       });
   };
