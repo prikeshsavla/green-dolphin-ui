@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { AppSidebar } from "@/components/app-sidebar";
 import {
   Breadcrumb,
@@ -24,77 +24,6 @@ import {
 } from "@/components/ui/table";
 import { Switch } from "@/components/ui/switch";
 
-// const data = {
-//   flags: [
-//     {
-//       id: 1,
-//       name: "Show UI",
-//       key: "show_ui",
-//       description: "Show the UI",
-//       default_value: false,
-//       created_at: "2025-03-23T11:44:12.352Z",
-//       updated_at: "2025-03-23T11:44:12.352Z",
-//       environment_flags: [
-//         {
-//           id: 1,
-//           environment_id: 1,
-//           value: true,
-//         },
-//         {
-//           id: 2,
-//           environment_id: 2,
-//           value: false,
-//         },
-//         {
-//           id: 7,
-//           environment_id: 3,
-//           value: false,
-//         },
-//       ],
-//     },
-//     {
-//       id: 2,
-//       name: "Show Contact",
-//       key: "show-contact",
-//       description: "Show Contact info",
-//       default_value: false,
-//       created_at: "2025-03-23T11:44:12.421Z",
-//       updated_at: "2025-03-23T11:44:12.421Z",
-//       environment_flags: [
-//         {
-//           id: 3,
-//           environment_id: 1,
-//           value: false,
-//         },
-//         {
-//           id: 4,
-//           environment_id: 2,
-//           value: false,
-//         },
-//         {
-//           id: 8,
-//           environment_id: 3,
-//           value: false,
-//         },
-//       ],
-//     },
-//   ],
-//   environments: [
-//     {
-//       id: 1,
-//       name: "Development",
-//     },
-//     {
-//       id: 2,
-//       name: "Test",
-//     },
-//     {
-//       id: 3,
-//       name: "Staging",
-//     },
-//   ],
-// };
-
 export default function Page() {
   const [data, setData] = useState(null);
   const [isLoading, setLoading] = useState(true);
@@ -111,19 +40,19 @@ export default function Page() {
   useEffect(fetchFlags, []);
 
   const toggleEnvironmentFlag = (
-    environment_flag_id: number,
+    environment_flag: {id: int, flag_id: int, environment_id: int},
     checked: boolean
   ) => {
     setData((prevData) => {
       const updatedFlags = prevData.flags.map((flag) => {
         const updatedEnvironmentFlags = flag.environment_flags.map((ef) =>
-          ef.id === environment_flag_id ? { ...ef, value: checked } : ef
+          ef.id === environment_flag.id ? { ...ef, value: checked } : ef
         );
         return { ...flag, environment_flags: updatedEnvironmentFlags };
       });
       return { ...prevData, flags: updatedFlags };
     });
-    fetch(`http://localhost:3000/environment_flags/${environment_flag_id}`, {
+    fetch(`http://localhost:3000/flags/${environment_flag.flag_id}/environments/${environment_flag.environment_id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -211,8 +140,8 @@ export default function Page() {
                             checked={environment_flag?.value}
                             onCheckedChange={(checked) =>
                               toggleEnvironmentFlag(
-                                environment_flag?.id,
-                                checked
+                                  environment_flag,
+                                  checked
                               )
                             }
                           />
